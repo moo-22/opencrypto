@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opencrypto"
+version = "1.0.0"
+description = "Modular algorithmic trading framework for crypto. Bring your own strategy."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+keywords = ["crypto", "trading", "algorithmic-trading", "framework", "backtesting", "binance"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+    "numpy>=2.0",
+    "pandas>=2.1",
+]
+
+[project.optional-dependencies]
+charts = ["matplotlib>=3.8", "mplfinance>=0.12"]
+telegram = []
+llm = ["groq>=0.11"]
+all = ["matplotlib>=3.8", "mplfinance>=0.12", "groq>=0.11"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.urls]
+Homepage = "https://github.com/wolfayana/open-crypto"
+Documentation = "https://github.com/wolfayana/open-crypto#readme"
+Issues = "https://github.com/wolfayana/open-crypto/issues"
+
+[tool.setuptools.packages.find]
+include = ["opencrypto*"]
+exclude = ["private_strategy*", "backend*", "tests*"]

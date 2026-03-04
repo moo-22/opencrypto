@@ -1,0 +1,58 @@
+# ═══════════════════════════════════════════
+# OpenCrypto Framework — .gitignore
+# ═══════════════════════════════════════════
+
+# ─── PRIVATE STRATEGY (SECRET SAUCE) ───
+private_strategy/
+!private_strategy/__init__.py
+
+# ─── Environment & Secrets ───
+.env
+.env.local
+.env.production
+
+# ─── Python ───
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# ─── Data Files (user-specific) ───
+data/
+backend/trades_history.json
+backend/backtest_results/
+backend/evolver_state.json
+backend/charts/
+backend/.wolfayana.pid
+trades_history_archive_*.json
+*.csv
+
+# ─── Old Backend (replaced by opencrypto/) ───
+backend/
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+
+# ─── IDE ───
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+
+# ─── Logs ───
+*.log
+
+# ─── ML Models ───
+*.bin
+*.pt
+*.onnx
+
+# ─── Claude/AI Agent ───
+.claude/settings.local.json
+mlidea/
