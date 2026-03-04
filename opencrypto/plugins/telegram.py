@@ -7,11 +7,14 @@ Requires TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env.
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 import httpx
 
 from opencrypto.core.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, USE_TELEGRAM
+
+logger = logging.getLogger(__name__)
 
 
 async def send_telegram_message(text: str, chat_id: str = "") -> bool:
@@ -30,7 +33,8 @@ async def send_telegram_message(text: str, chat_id: str = "") -> bool:
                 "parse_mode": "HTML",
             })
             return resp.status_code == 200
-    except Exception:
+    except Exception as exc:
+        logger.error("Telegram message failed: %s", exc)
         return False
 
 
@@ -87,5 +91,6 @@ async def send_photo(photo_path: str, caption: str = "", chat_id: str = "") -> b
                     "parse_mode": "HTML",
                 }, files={"photo": f})
                 return resp.status_code == 200
-    except Exception:
+    except Exception as exc:
+        logger.error("Telegram photo send failed: %s", exc)
         return False

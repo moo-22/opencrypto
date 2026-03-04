@@ -11,15 +11,17 @@ Trade lifecycle management: open, track, trail, close.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional, Callable, Awaitable
 
 import httpx
 
 from opencrypto.core.config import DATA_DIR
+
+logger = logging.getLogger(__name__)
 
 FAPI_URL = "https://fapi.binance.com"
 

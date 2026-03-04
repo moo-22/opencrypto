@@ -7,7 +7,11 @@ Requires GROQ_API_KEY in .env and USE_LLM=true.
 
 from __future__ import annotations
 
+import logging
+
 from opencrypto.core.config import GROQ_API_KEY, USE_LLM
+
+logger = logging.getLogger(__name__)
 
 
 def ai_comment(signal: dict, sentiment_data: dict | None = None) -> dict:
@@ -40,5 +44,6 @@ def ai_comment(signal: dict, sentiment_data: dict | None = None) -> dict:
         tokens = response.usage.total_tokens if response.usage else 0
         return {"comment": comment, "tokens_used": tokens}
 
-    except Exception as e:
-        return {"comment": "", "tokens_used": 0, "error": str(e)}
+    except Exception as exc:
+        logger.warning("LLM comment generation failed: %s", exc)
+        return {"comment": "", "tokens_used": 0, "error": str(exc)}

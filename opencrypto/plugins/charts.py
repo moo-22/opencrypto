@@ -7,11 +7,14 @@ Requires matplotlib and mplfinance.
 
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime
 from typing import Optional
 
 from opencrypto.core.config import DATA_DIR
+
+logger = logging.getLogger(__name__)
 
 CHARTS_DIR = str(DATA_DIR / "charts")
 
@@ -75,5 +78,6 @@ async def generate_chart(
         )
         return fpath
 
-    except Exception:
+    except Exception as exc:
+        logger.error("Chart generation failed: %s", exc)
         return None

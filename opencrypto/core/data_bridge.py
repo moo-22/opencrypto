@@ -7,12 +7,17 @@ with automatic failover. Includes sentiment data aggregation.
 
 from __future__ import annotations
 
+import logging
 import re
 from typing import Optional
 
 import httpx
 import pandas as pd
 import numpy as np
+
+from opencrypto.core.exceptions import DataFetchError
+
+logger = logging.getLogger(__name__)
 
 
 FAPI_URL = "https://fapi.binance.com"
@@ -65,7 +70,8 @@ class DataBridge:
                 resp = await client.get(f"{SPOT_URL}/api/v3/ticker/24hr")
             resp.raise_for_status()
             tickers = resp.json()
-        except Exception:
+        except Exception as exc:
+            logger.warning("Failed to fetch top coins, using fallback list: %s", exc)
             return ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT"]
 
         filtered = []
@@ -117,8 +123,10 @@ class DataBridge:
                 return df[["timestamp", "open", "high", "low", "close", "volume",
                            "quote_volume", "trades", "taker_buy_base",
                            "taker_buy_quote"]].copy().reset_index(drop=True)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Kline fetch failed for %s from %s: %s", symbol, url, exc)
                 continue
+        logger.warning("All kline endpoints failed for %s", symbol)
         return pd.DataFrame()
 
     async def fetch_klines_4h(self, symbol: str, limit: int = 100) -> pd.DataFrame:
@@ -136,8 +144,8 @@ class DataBridge:
             )
             if resp.status_code == 200:
                 return float(resp.json()["price"])
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("Price fetch failed for %s: %s", symbol, exc)
         return None
 
     async def get_orderbook_depth(self, symbol: str, depth: int = 20) -> dict:
@@ -161,7 +169,8 @@ class DataBridge:
                 "ask_volume": round(ask_vol, 2),
                 "imbalance": round(imbalance, 4),
             }
-        except Exception:
+        except Exception as exc:
+            logger.debug("Orderbook fetch failed for %s: %s", symbol, exc)
             return {"imbalance": 0}
 
     async def get_24h_stats(self, symbol: str) -> dict:
@@ -182,6 +191,6 @@ class DataBridge:
                     "high": float(d.get("highPrice", 0)),
                     "low": float(d.get("lowPrice", 0)),
                 }
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("24h stats fetch failed for %s: %s", symbol, exc)
         return {}

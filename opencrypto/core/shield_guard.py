@@ -10,6 +10,7 @@ Consolidated risk management module:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
@@ -17,7 +18,10 @@ from typing import Optional
 import pandas as pd
 import httpx
 
+from opencrypto.core.exceptions import DataFetchError
 from opencrypto.indicators.technical import compute_all_indicators, ema, rsi, supertrend
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -303,7 +307,9 @@ class ShieldGuard:
                     return df.reset_index(drop=True)
             except Exception:
                 continue
-        raise RuntimeError("All BTC endpoints failed")
+        raise DataFetchError(
+            "All BTC 4h endpoints failed", symbol="BTCUSDT", source="binance"
+        )
 
     async def get_btc_gate(self) -> BTCGate:
         """Fetch BTC data and determine market conditions."""

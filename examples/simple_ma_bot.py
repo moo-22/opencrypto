@@ -13,6 +13,7 @@ Usage:
 """
 
 import asyncio
+import logging
 import sys
 import os
 
@@ -22,6 +23,8 @@ from opencrypto.core.base_strategy import BaseStrategy, StrategySignal
 from opencrypto.indicators.technical import compute_all_indicators
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class SimpleMAStrategy:
@@ -110,7 +113,7 @@ async def main():
     from opencrypto.backtest import run_backtest
 
     strategy = SimpleMAStrategy()
-    print(f"Running backtest for: {strategy.name} v{strategy.version}\n")
+    logger.info("Running backtest for: %s v%s", strategy.name, strategy.version)
 
     report = await run_backtest(
         strategy=strategy,
@@ -123,10 +126,10 @@ async def main():
 
     if report.get("stats"):
         s = report["stats"]
-        print(f"\nFinal Results:")
-        print(f"  Win Rate: {s['win_rate']}%")
-        print(f"  Total R: {s['total_r']}R")
-        print(f"  Return: {s['total_return']}%")
+        logger.info(
+            "Final — WR: %s%% | R: %sR | Return: %s%%",
+            s["win_rate"], s["total_r"], s["total_return"],
+        )
 
 
 if __name__ == "__main__":

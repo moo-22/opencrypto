@@ -39,13 +39,13 @@ It was extracted from a private trading system with an **85.5% win rate** across
 ### Install
 
 ```bash
-pip install git+https://github.com/wolfayana/open-crypto.git
+pip install git+https://github.com/kayrademirkan/opencrypto.git
 ```
 
 Or clone and install locally:
 
 ```bash
-git clone https://github.com/wolfayana/open-crypto.git
+git clone https://github.com/kayrademirkan/opencrypto.git
 cd open-crypto
 pip install -e .
 ```

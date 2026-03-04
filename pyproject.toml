@@ -32,13 +32,25 @@ charts = ["matplotlib>=3.8", "mplfinance>=0.12"]
 telegram = []
 llm = ["groq>=0.11"]
 all = ["matplotlib>=3.8", "mplfinance>=0.12", "groq>=0.11"]
-dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "black>=24.0", "flake8>=7.0", "mypy>=1.8"]
 
 [project.urls]
-Homepage = "https://github.com/wolfayana/open-crypto"
-Documentation = "https://github.com/wolfayana/open-crypto#readme"
-Issues = "https://github.com/wolfayana/open-crypto/issues"
+Homepage = "https://github.com/kayrademirkan/opencrypto"
+Documentation = "https://github.com/kayrademirkan/opencrypto#readme"
+Issues = "https://github.com/kayrademirkan/opencrypto/issues"
 
 [tool.setuptools.packages.find]
 include = ["opencrypto*"]
 exclude = ["private_strategy*", "backend*", "tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+[tool.mypy]
+ignore_missing_imports = true
+strict = false

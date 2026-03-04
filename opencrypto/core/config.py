@@ -5,10 +5,25 @@ Loads settings from environment variables. All API keys are optional.
 Copy .env.example to .env and fill in your values.
 """
 
+import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+# ─── Logging ────────────────────────────────────────────────────────
+
+LOG_FORMAT = os.getenv(
+    "OPENCRYPTO_LOG_FORMAT",
+    "%(asctime)s [%(name)s] %(levelname)s — %(message)s",
+)
+LOG_LEVEL = os.getenv("OPENCRYPTO_LOG_LEVEL", "INFO").upper()
+
+logging.basicConfig(format=LOG_FORMAT, level=getattr(logging, LOG_LEVEL, logging.INFO))
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+# ─── Environment ────────────────────────────────────────────────────
 
 _env_path = Path(__file__).parent.parent.parent / ".env"
 if _env_path.exists():

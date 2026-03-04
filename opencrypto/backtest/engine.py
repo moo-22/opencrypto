@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
@@ -25,10 +26,13 @@ import pandas as pd
 import httpx
 
 from opencrypto.core.base_strategy import BaseStrategy, StrategySignal
+from opencrypto.core.exceptions import BacktestError, DataFetchError
 from opencrypto.indicators.technical import compute_all_indicators
 from opencrypto.core.shield_guard import ShieldGuard
 from opencrypto.core.data_bridge import DataBridge
 from opencrypto.core.config import DATA_DIR
+
+logger = logging.getLogger(__name__)
 
 FAPI_URL = "https://fapi.binance.com"
 BACKTEST_DIR = str(DATA_DIR / "backtest_results")
@@ -415,7 +419,8 @@ async def fetch_historical(symbol: str, interval: str = "1h",
                 if len(data) < 1000:
                     break
                 await asyncio.sleep(0.2)
-            except Exception:
+            except Exception as exc:
+                logger.debug("Historical fetch failed for %s: %s", symbol, exc)
                 break
 
     if not all_data:
@@ -451,12 +456,11 @@ async def run_backtest(
     """Run full backtest with any strategy."""
     t0 = datetime.now(timezone.utc)
 
-    print("=" * 60)
-    print(f"OpenCrypto Backtest — {strategy.name} v{strategy.version}")
-    print("=" * 60)
-    print(f"Period: {days} days | Step: {step}h | Max hold: {max_hold}h")
-    print(f"Capital: ${initial_capital} | Risk/trade: {risk_per_trade*100}%")
-    print("=" * 60)
+    logger.info("Backtest started — %s v%s", strategy.name, strategy.version)
+    logger.info(
+        "Period: %d days | Step: %dh | Max hold: %dh | Capital: $%.0f | Risk/trade: %.1f%%",
+        days, step, max_hold, initial_capital, risk_per_trade * 100,
+    )
 
     bridge = DataBridge()
     if symbols is None:
@@ -471,20 +475,22 @@ async def run_backtest(
     )
 
     for i, sym in enumerate(symbols):
-        print(f"[{i+1}/{len(symbols)}] {sym}...", end=" ", flush=True)
         df = await fetch_historical(sym, "1h", days)
         if df.empty or len(df) < 250:
-            print(f"skip ({len(df)} bars)")
+            logger.debug("[%d/%d] %s — skip (%d bars)", i + 1, len(symbols), sym, len(df))
             continue
         sigs = await engine.run_coin(sym, df)
         if sigs:
             w = sum(1 for s in sigs if s.pnl_r > 0)
             pnl_r = sum(s.pnl_r for s in sigs)
-            print(f"{len(sigs)} trades | {w}W/{len(sigs)-w}L | R: {pnl_r:+.2f}")
+            logger.info(
+                "[%d/%d] %s — %d trades | %dW/%dL | R: %+.2f",
+                i + 1, len(symbols), sym, len(sigs), w, len(sigs) - w, pnl_r,
+            )
         else:
-            print("no signals")
+            logger.debug("[%d/%d] %s — no signals", i + 1, len(symbols), sym)
         if engine.stopped:
-            print(f"  STOPPED — max drawdown {max_drawdown}% reached")
+            logger.warning("Backtest stopped — max drawdown %.1f%% reached", max_drawdown)
             break
         await asyncio.sleep(0.3)
 
@@ -492,15 +498,21 @@ async def run_backtest(
     elapsed = (t1 - t0).total_seconds()
 
     if not engine.results:
-        print("No trades found.")
+        logger.info("Backtest finished — no trades found (%.1fs)", elapsed)
         return {"status": "done", "signals": 0, "elapsed": round(elapsed, 1)}
 
     stats = calc_stats(engine.results, engine)
 
-    print(f"\nResults: {stats['total']} trades | WR: {stats['win_rate']}% | PF: {stats['profit_factor']}")
-    print(f"R-Unit: {stats['total_r']}R | Avg: {stats['avg_r']}R")
-    print(f"Capital: ${stats['initial_capital']} -> ${stats['final_capital']} ({stats['total_return']:+.2f}%)")
-    print(f"Max DD: {stats['max_drawdown']}% | Time: {elapsed:.0f}s")
+    logger.info(
+        "Results: %d trades | WR: %.1f%% | PF: %.2f | R: %+.2fR (avg %.2fR)",
+        stats["total"], stats["win_rate"], stats["profit_factor"],
+        stats["total_r"], stats["avg_r"],
+    )
+    logger.info(
+        "Capital: $%.0f → $%.0f (%+.2f%%) | Max DD: %.1f%% | Time: %.0fs",
+        stats["initial_capital"], stats["final_capital"],
+        stats["total_return"], stats["max_drawdown"], elapsed,
+    )
 
     report = {
         "meta": {
@@ -521,6 +533,6 @@ async def run_backtest(
         path = os.path.join(BACKTEST_DIR, fname)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2, default=str)
-        print(f"Saved: {path}")
+        logger.info("Report saved: %s", path)
 
     return report
