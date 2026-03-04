@@ -22,10 +22,12 @@ from opencrypto.indicators.technical import (
 def _find_pivots(series: np.ndarray, left: int = 5, right: int = 5) -> list[tuple]:
     pivots = []
     for i in range(left, len(series) - right):
-        is_high = all(series[i] >= series[i - j] for j in range(1, left + 1)) and \
-                  all(series[i] >= series[i + j] for j in range(1, right + 1))
-        is_low = all(series[i] <= series[i - j] for j in range(1, left + 1)) and \
-                 all(series[i] <= series[i + j] for j in range(1, right + 1))
+        is_high = all(series[i] >= series[i - j] for j in range(1, left + 1)) and all(
+            series[i] >= series[i + j] for j in range(1, right + 1)
+        )
+        is_low = all(series[i] <= series[i - j] for j in range(1, left + 1)) and all(
+            series[i] <= series[i + j] for j in range(1, right + 1)
+        )
         if is_high:
             pivots.append((i, series[i], "high"))
         if is_low:
@@ -34,8 +36,7 @@ def _find_pivots(series: np.ndarray, left: int = 5, right: int = 5) -> list[tupl
 
 
 def detect_rsi_divergence(df: pd.DataFrame, lookback: int = 60) -> dict:
-    result = {"bullish": False, "bearish": False, "hidden_bull": False,
-              "hidden_bear": False, "detail": ""}
+    result = {"bullish": False, "bearish": False, "hidden_bull": False, "hidden_bear": False, "detail": ""}
     if len(df) < lookback:
         return result
     window = df.iloc[-lookback:]
@@ -84,28 +85,36 @@ def detect_order_blocks(df: pd.DataFrame, lookback: int = 30) -> list[dict]:
             ob_type = "bullish" if window["close"].iloc[i] > window["open"].iloc[i] else "bearish"
             invalidated = False
             mitigate_count = 0
-            future_bars = window.iloc[i + 1:]
+            future_bars = window.iloc[i + 1 :]
             for j in range(len(future_bars)):
                 bar_close = float(future_bars["close"].iloc[j])
                 bar_low = float(future_bars["low"].iloc[j])
                 bar_high = float(future_bars["high"].iloc[j])
                 if ob_type == "bullish":
                     if bar_close < ob_low:
-                        invalidated = True; break
+                        invalidated = True
+                        break
                     if bar_low <= ob_high and bar_close > ob_low:
                         mitigate_count += 1
                 else:
                     if bar_close > ob_high:
-                        invalidated = True; break
+                        invalidated = True
+                        break
                     if bar_high >= ob_low and bar_close < ob_high:
                         mitigate_count += 1
             if not invalidated:
                 strength = max(0.3, 1.0 - mitigate_count * 0.25)
-                blocks.append({"type": ob_type, "low": ob_low, "high": ob_high,
-                               "index": int(window.index[i]),
-                               "mitigate_count": mitigate_count,
-                               "strength": round(strength, 2),
-                               "fresh": mitigate_count == 0})
+                blocks.append(
+                    {
+                        "type": ob_type,
+                        "low": ob_low,
+                        "high": ob_high,
+                        "index": int(window.index[i]),
+                        "mitigate_count": mitigate_count,
+                        "strength": round(strength, 2),
+                        "fresh": mitigate_count == 0,
+                    }
+                )
     return blocks[-5:]
 
 
@@ -116,19 +125,27 @@ def detect_fvg(df: pd.DataFrame, lookback: int = 20) -> list[dict]:
     window = df.iloc[-lookback:]
     for i in range(2, len(window)):
         if window["low"].iloc[i] > window["high"].iloc[i - 2]:
-            gaps.append({"type": "bullish", "top": float(window["low"].iloc[i]),
-                         "bottom": float(window["high"].iloc[i - 2])})
+            gaps.append(
+                {"type": "bullish", "top": float(window["low"].iloc[i]), "bottom": float(window["high"].iloc[i - 2])}
+            )
         elif window["high"].iloc[i] < window["low"].iloc[i - 2]:
-            gaps.append({"type": "bearish", "top": float(window["low"].iloc[i - 2]),
-                         "bottom": float(window["high"].iloc[i])})
+            gaps.append(
+                {"type": "bearish", "top": float(window["low"].iloc[i - 2]), "bottom": float(window["high"].iloc[i])}
+            )
     return gaps[-5:]
 
 
 def detect_liquidity_sweep(df: pd.DataFrame) -> dict:
-    result = {"bullish_sweep": False, "bearish_sweep": False,
-              "equal_highs": False, "equal_lows": False,
-              "stop_hunt_bull": False, "stop_hunt_bear": False,
-              "sweep_strength": 0, "detail": ""}
+    result = {
+        "bullish_sweep": False,
+        "bearish_sweep": False,
+        "equal_highs": False,
+        "equal_lows": False,
+        "stop_hunt_bull": False,
+        "stop_hunt_bear": False,
+        "sweep_strength": 0,
+        "detail": "",
+    }
     if len(df) < 20:
         return result
     recent = df.iloc[-5:]
@@ -143,12 +160,22 @@ def detect_liquidity_sweep(df: pd.DataFrame) -> dict:
     tolerance = 0.002
     highs = prev["high"].values
     lows = prev["low"].values
-    eq_h = sum(1 for i in range(len(highs)) for j in range(i+2, len(highs))
-               if abs(highs[i]-highs[j])/(highs[i]+1e-10) < tolerance)
-    eq_l = sum(1 for i in range(len(lows)) for j in range(i+2, len(lows))
-               if abs(lows[i]-lows[j])/(lows[i]+1e-10) < tolerance)
-    if eq_h >= 2: result["equal_highs"] = True
-    if eq_l >= 2: result["equal_lows"] = True
+    eq_h = sum(
+        1
+        for i in range(len(highs))
+        for j in range(i + 2, len(highs))
+        if abs(highs[i] - highs[j]) / (highs[i] + 1e-10) < tolerance
+    )
+    eq_l = sum(
+        1
+        for i in range(len(lows))
+        for j in range(i + 2, len(lows))
+        if abs(lows[i] - lows[j]) / (lows[i] + 1e-10) < tolerance
+    )
+    if eq_h >= 2:
+        result["equal_highs"] = True
+    if eq_l >= 2:
+        result["equal_lows"] = True
     sweep_str = 0
     if last_low < prev_low and last_close > prev_low:
         result["bullish_sweep"] = True
@@ -156,9 +183,16 @@ def detect_liquidity_sweep(df: pd.DataFrame) -> dict:
         parts = [f"Bullish sweep: {prev_low:.4f}"]
         sw = min(recent["close"].min(), recent["open"].min()) - last_low
         sb = abs(float(recent["close"].iloc[-1]) - float(recent["open"].iloc[-1]))
-        if sw > sb * 2: sweep_str += 1; parts.append("wick reject")
-        if last_vol > avg_vol * 1.5: sweep_str += 1; parts.append("vol spike")
-        if result["equal_lows"]: sweep_str += 1; parts.append("EQL swept"); result["stop_hunt_bull"] = True
+        if sw > sb * 2:
+            sweep_str += 1
+            parts.append("wick reject")
+        if last_vol > avg_vol * 1.5:
+            sweep_str += 1
+            parts.append("vol spike")
+        if result["equal_lows"]:
+            sweep_str += 1
+            parts.append("EQL swept")
+            result["stop_hunt_bull"] = True
         result["detail"] = " + ".join(parts)
     if last_high > prev_high and last_close < prev_high:
         result["bearish_sweep"] = True
@@ -166,9 +200,16 @@ def detect_liquidity_sweep(df: pd.DataFrame) -> dict:
         parts = [f"Bearish sweep: {prev_high:.4f}"]
         sw = last_high - max(float(recent["close"].iloc[-1]), float(recent["open"].iloc[-1]))
         sb = abs(float(recent["close"].iloc[-1]) - float(recent["open"].iloc[-1]))
-        if sw > sb * 2: ss += 1; parts.append("wick reject")
-        if last_vol > avg_vol * 1.5: ss += 1; parts.append("vol spike")
-        if result["equal_highs"]: ss += 1; parts.append("EQH swept"); result["stop_hunt_bear"] = True
+        if sw > sb * 2:
+            ss += 1
+            parts.append("wick reject")
+        if last_vol > avg_vol * 1.5:
+            ss += 1
+            parts.append("vol spike")
+        if result["equal_highs"]:
+            ss += 1
+            parts.append("EQH swept")
+            result["stop_hunt_bear"] = True
         sweep_str = max(sweep_str, ss)
         result["detail"] = " + ".join(parts)
     result["sweep_strength"] = min(sweep_str, 3)
@@ -183,7 +224,9 @@ def detect_wyckoff_phase(df: pd.DataFrame) -> dict:
     recent_50 = df.iloc[-50:]
     vol_trend = recent_20["volume"].mean() / (recent_50["volume"].mean() + 1e-10)
     price_range_20 = (recent_20["high"].max() - recent_20["low"].min()) / (recent_20["close"].mean() + 1e-10)
-    price_change = (float(recent_20["close"].iloc[-1]) - float(recent_20["close"].iloc[0])) / (float(recent_20["close"].iloc[0]) + 1e-10)
+    price_change = (float(recent_20["close"].iloc[-1]) - float(recent_20["close"].iloc[0])) / (
+        float(recent_20["close"].iloc[0]) + 1e-10
+    )
     if price_range_20 < 0.05 and vol_trend > 1.2:
         result["phase"] = "accumulation"
         result["detail"] = "Tight range + rising volume"
@@ -205,9 +248,16 @@ def detect_wyckoff_phase(df: pd.DataFrame) -> dict:
 
 
 def detect_swing_points(df, left=3, right=3, lookback=60):
-    result = {"swing_highs": [], "swing_lows": [], "structure": "unknown",
-              "last_hh": None, "last_ll": None, "last_hl": None, "last_lh": None,
-              "trend_shifts": 0}
+    result = {
+        "swing_highs": [],
+        "swing_lows": [],
+        "structure": "unknown",
+        "last_hh": None,
+        "last_ll": None,
+        "last_hl": None,
+        "last_lh": None,
+        "trend_shifts": 0,
+    }
     if len(df) < lookback:
         return result
     window = df.iloc[-lookback:]
@@ -216,10 +266,12 @@ def detect_swing_points(df, left=3, right=3, lookback=60):
     swing_highs = []
     swing_lows = []
     for i in range(left, len(window) - right):
-        is_sh = all(highs[i] >= highs[i-j] for j in range(1, left+1)) and \
-                all(highs[i] >= highs[i+j] for j in range(1, right+1))
-        is_sl = all(lows[i] <= lows[i-j] for j in range(1, left+1)) and \
-                all(lows[i] <= lows[i+j] for j in range(1, right+1))
+        is_sh = all(highs[i] >= highs[i - j] for j in range(1, left + 1)) and all(
+            highs[i] >= highs[i + j] for j in range(1, right + 1)
+        )
+        is_sl = all(lows[i] <= lows[i - j] for j in range(1, left + 1)) and all(
+            lows[i] <= lows[i + j] for j in range(1, right + 1)
+        )
         if is_sh:
             swing_highs.append((int(window.index[i]), float(highs[i])))
         if is_sl:
@@ -237,10 +289,10 @@ def detect_swing_points(df, left=3, right=3, lookback=60):
         else:
             result["last_ll"] = swing_lows[-1]
     if len(swing_highs) >= 2 and len(swing_lows) >= 2:
-        hh_c = sum(1 for i in range(1, len(swing_highs)) if swing_highs[i][1] > swing_highs[i-1][1])
-        ll_c = sum(1 for i in range(1, len(swing_lows)) if swing_lows[i][1] < swing_lows[i-1][1])
-        hl_c = sum(1 for i in range(1, len(swing_lows)) if swing_lows[i][1] > swing_lows[i-1][1])
-        lh_c = sum(1 for i in range(1, len(swing_highs)) if swing_highs[i][1] < swing_highs[i-1][1])
+        hh_c = sum(1 for i in range(1, len(swing_highs)) if swing_highs[i][1] > swing_highs[i - 1][1])
+        ll_c = sum(1 for i in range(1, len(swing_lows)) if swing_lows[i][1] < swing_lows[i - 1][1])
+        hl_c = sum(1 for i in range(1, len(swing_lows)) if swing_lows[i][1] > swing_lows[i - 1][1])
+        lh_c = sum(1 for i in range(1, len(swing_highs)) if swing_highs[i][1] < swing_highs[i - 1][1])
         bull = hh_c + hl_c
         bear = ll_c + lh_c
         if bull > bear + 1:
@@ -254,9 +306,14 @@ def detect_swing_points(df, left=3, right=3, lookback=60):
 
 
 def detect_bos(df, swings=None):
-    result = {"bullish_bos": False, "bearish_bos": False,
-              "choch_bull": False, "choch_bear": False,
-              "bos_level": 0.0, "detail": ""}
+    result = {
+        "bullish_bos": False,
+        "bearish_bos": False,
+        "choch_bull": False,
+        "choch_bear": False,
+        "bos_level": 0.0,
+        "detail": "",
+    }
     if swings is None:
         swings = detect_swing_points(df)
     current_close = float(df["close"].iloc[-1])
@@ -286,8 +343,7 @@ def detect_bos(df, swings=None):
 
 
 def detect_qml(df, swings=None):
-    result = {"bullish_qml": False, "bearish_qml": False,
-              "qml_level": 0.0, "detail": ""}
+    result = {"bullish_qml": False, "bearish_qml": False, "qml_level": 0.0, "detail": ""}
     if swings is None:
         swings = detect_swing_points(df)
     sh = swings["swing_highs"]
@@ -316,8 +372,7 @@ def detect_qml(df, swings=None):
 
 
 def detect_fakeout(df):
-    result = {"bullish_fakeout": False, "bearish_fakeout": False,
-              "fakeout_type": "", "is_trap": False, "detail": ""}
+    result = {"bullish_fakeout": False, "bearish_fakeout": False, "fakeout_type": "", "is_trap": False, "detail": ""}
     if len(df) < 25:
         return result
     prev = df.iloc[-25:-3]
@@ -371,8 +426,7 @@ def detect_fakeout(df):
 
 
 def detect_sr_flip(df, swings=None):
-    result = {"sr_flip": False, "rs_flip": False, "flip_level": 0.0,
-              "retest_quality": 0, "detail": ""}
+    result = {"sr_flip": False, "rs_flip": False, "flip_level": 0.0, "retest_quality": 0, "detail": ""}
     if swings is None:
         swings = detect_swing_points(df)
     if len(df) < 30:
@@ -382,11 +436,12 @@ def detect_sr_flip(df, swings=None):
     ch = float(df["high"].iloc[-1])
     sh = swings["swing_highs"]
     sl = swings["swing_lows"]
-    for i in range(len(sh)-2, -1, -1):
+    for i in range(len(sh) - 2, -1, -1):
         level = sh[i][1]
         idx = sh[i][0]
-        broken = any(j < len(df) and float(df["close"].iloc[j]) > level * 1.003
-                     for j in range(idx+1, min(idx+20, len(df))))
+        broken = any(
+            j < len(df) and float(df["close"].iloc[j]) > level * 1.003 for j in range(idx + 1, min(idx + 20, len(df)))
+        )
         if broken and cc > level:
             dist = (cl - level) / (level + 1e-10) * 100
             if -0.5 <= dist <= 1.5:
@@ -397,11 +452,13 @@ def detect_sr_flip(df, swings=None):
                 result["detail"] = f"SR Flip: {level:.4f} (Q={q})"
                 break
     if not result["sr_flip"]:
-        for i in range(len(sl)-2, -1, -1):
+        for i in range(len(sl) - 2, -1, -1):
             level = sl[i][1]
             idx = sl[i][0]
-            broken = any(j < len(df) and float(df["close"].iloc[j]) < level * 0.997
-                         for j in range(idx+1, min(idx+20, len(df))))
+            broken = any(
+                j < len(df) and float(df["close"].iloc[j]) < level * 0.997
+                for j in range(idx + 1, min(idx + 20, len(df)))
+            )
             if broken and cc < level:
                 dist = (level - ch) / (level + 1e-10) * 100
                 if -0.5 <= dist <= 1.5:
@@ -415,8 +472,7 @@ def detect_sr_flip(df, swings=None):
 
 
 def detect_compression(df):
-    result = {"compression": False, "compression_strength": 0,
-              "bias": "neutral", "detail": ""}
+    result = {"compression": False, "compression_strength": 0, "bias": "neutral", "detail": ""}
     if len(df) < 25:
         return result
     r5 = df.iloc[-5:]
@@ -425,11 +481,13 @@ def detect_compression(df):
     range_20 = float(r20["high"].max() - r20["low"].min())
     rr = range_5 / (range_20 + 1e-10)
     vr = float(r5["volume"].mean()) / (float(r20["volume"].mean()) + 1e-10)
-    inside_c = sum(1 for i in range(1, len(r5))
-                   if float(r5["high"].iloc[i]) <= float(r5["high"].iloc[i-1]) and
-                      float(r5["low"].iloc[i]) >= float(r5["low"].iloc[i-1]))
-    s = (1 if rr < 0.35 else 0) + (1 if rr < 0.25 else 0) + \
-        (1 if vr < 0.7 else 0) + (1 if inside_c >= 2 else 0)
+    inside_c = sum(
+        1
+        for i in range(1, len(r5))
+        if float(r5["high"].iloc[i]) <= float(r5["high"].iloc[i - 1])
+        and float(r5["low"].iloc[i]) >= float(r5["low"].iloc[i - 1])
+    )
+    s = (1 if rr < 0.35 else 0) + (1 if rr < 0.25 else 0) + (1 if vr < 0.7 else 0) + (1 if inside_c >= 2 else 0)
     if s >= 2:
         result["compression"] = True
         result["compression_strength"] = min(s, 3)
@@ -445,8 +503,12 @@ def compute_mtf_bias(df_4h: pd.DataFrame) -> dict:
     Used to confirm/reject signals from shorter timeframes.
     """
     result = {
-        "bias": "neutral", "ema_trend": "flat", "rsi_zone": "neutral",
-        "supertrend_dir": 0, "confirms_long": True, "confirms_short": True,
+        "bias": "neutral",
+        "ema_trend": "flat",
+        "rsi_zone": "neutral",
+        "supertrend_dir": 0,
+        "confirms_long": True,
+        "confirms_short": True,
         "detail": "MTF: Insufficient data",
     }
     if len(df_4h) < 60:
@@ -476,21 +538,36 @@ def compute_mtf_bias(df_4h: pd.DataFrame) -> dict:
         rsi_zone = "neutral"
     bull_count = 0
     bear_count = 0
-    if ema_trend == "up": bull_count += 1
-    elif ema_trend == "down": bear_count += 1
-    if st_dir_now == 1: bull_count += 1
-    elif st_dir_now == -1: bear_count += 1
-    if rsi_zone == "overbought": bear_count += 0.5
-    elif rsi_zone == "oversold": bull_count += 0.5
-    if bull_count >= 2: bias = "bullish"
-    elif bear_count >= 2: bias = "bearish"
-    else: bias = "neutral"
+    if ema_trend == "up":
+        bull_count += 1
+    elif ema_trend == "down":
+        bear_count += 1
+    if st_dir_now == 1:
+        bull_count += 1
+    elif st_dir_now == -1:
+        bear_count += 1
+    if rsi_zone == "overbought":
+        bear_count += 0.5
+    elif rsi_zone == "oversold":
+        bull_count += 0.5
+    if bull_count >= 2:
+        bias = "bullish"
+    elif bear_count >= 2:
+        bias = "bearish"
+    else:
+        bias = "neutral"
     confirms_long = bias != "bearish"
     confirms_short = bias != "bullish"
-    detail = (f"4h: EMA={ema_trend}, RSI={rsi_now:.0f}({rsi_zone}), "
-              f"ST={'up' if st_dir_now == 1 else 'down'} -> {bias.upper()}")
+    detail = (
+        f"4h: EMA={ema_trend}, RSI={rsi_now:.0f}({rsi_zone}), "
+        f"ST={'up' if st_dir_now == 1 else 'down'} -> {bias.upper()}"
+    )
     return {
-        "bias": bias, "ema_trend": ema_trend, "rsi_zone": rsi_zone,
-        "supertrend_dir": st_dir_now, "confirms_long": confirms_long,
-        "confirms_short": confirms_short, "detail": detail,
+        "bias": bias,
+        "ema_trend": ema_trend,
+        "rsi_zone": rsi_zone,
+        "supertrend_dir": st_dir_now,
+        "confirms_long": confirms_long,
+        "confirms_short": confirms_short,
+        "detail": detail,
     }

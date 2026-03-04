@@ -170,7 +170,7 @@ class ShieldGuard:
                 taker_ratio = taker_buy / total_vol
                 if taker_ratio > 0.85 or taker_ratio < 0.15:
                     result.risk_score += 10
-                    result.warnings.append(f"Taker imbalance: {taker_ratio*100:.0f}%")
+                    result.warnings.append(f"Taker imbalance: {taker_ratio * 100:.0f}%")
 
         # 7. Liquidation cascade
         if len(df) >= 3:
@@ -291,24 +291,54 @@ class ShieldGuard:
                     data = resp.json()
                     if not data or len(data) < 50:
                         continue
-                    df = pd.DataFrame(data, columns=[
-                        "open_time", "open", "high", "low", "close", "volume",
-                        "close_time", "quote_volume", "trades",
-                        "taker_buy_base", "taker_buy_quote", "ignore",
-                    ])
-                    for col in ["open", "high", "low", "close", "volume",
-                                "quote_volume", "taker_buy_base", "taker_buy_quote"]:
+                    df = pd.DataFrame(
+                        data,
+                        columns=[
+                            "open_time",
+                            "open",
+                            "high",
+                            "low",
+                            "close",
+                            "volume",
+                            "close_time",
+                            "quote_volume",
+                            "trades",
+                            "taker_buy_base",
+                            "taker_buy_quote",
+                            "ignore",
+                        ],
+                    )
+                    for col in [
+                        "open",
+                        "high",
+                        "low",
+                        "close",
+                        "volume",
+                        "quote_volume",
+                        "taker_buy_base",
+                        "taker_buy_quote",
+                    ]:
                         df[col] = df[col].astype(float)
                     df["trades"] = df["trades"].astype(int)
                     df["timestamp"] = pd.to_datetime(df["open_time"], unit="ms")
-                    df = df[["timestamp", "open", "high", "low", "close", "volume",
-                             "quote_volume", "trades", "taker_buy_base", "taker_buy_quote"]].copy()
+                    df = df[
+                        [
+                            "timestamp",
+                            "open",
+                            "high",
+                            "low",
+                            "close",
+                            "volume",
+                            "quote_volume",
+                            "trades",
+                            "taker_buy_base",
+                            "taker_buy_quote",
+                        ]
+                    ].copy()
                     return df.reset_index(drop=True)
             except Exception:
                 continue
-        raise DataFetchError(
-            "All BTC 4h endpoints failed", symbol="BTCUSDT", source="binance"
-        )
+        raise DataFetchError("All BTC 4h endpoints failed", symbol="BTCUSDT", source="binance")
 
     async def get_btc_gate(self) -> BTCGate:
         """Fetch BTC data and determine market conditions."""
@@ -365,13 +395,19 @@ class ShieldGuard:
                 reason = "BTC neutral zone"
 
             gate = BTCGate(
-                trend=trend, allow_long=allow_long, allow_short=allow_short,
-                reason=reason, btc_1h_change=btc_1h_change,
+                trend=trend,
+                allow_long=allow_long,
+                allow_short=allow_short,
+                reason=reason,
+                btc_1h_change=btc_1h_change,
                 btc_4h_change=round(btc_4h_change, 3),
                 btc_24h_change=round(btc_24h_change, 3),
-                btc_momentum=btc_momentum, btc_rsi=round(rsi_val, 1),
-                is_crash=is_crash, is_dump=is_dump,
-                is_pump=is_pump, is_rally=is_rally,
+                btc_momentum=btc_momentum,
+                btc_rsi=round(rsi_val, 1),
+                is_crash=is_crash,
+                is_dump=is_dump,
+                is_pump=is_pump,
+                is_rally=is_rally,
                 is_transition_dump=is_transition_dump,
                 is_transition_pump=is_transition_pump,
                 is_pump_exhausted=is_pump_exhausted,

@@ -48,17 +48,20 @@ def bollinger_bands(series: pd.Series, period: int = 20, std_dev: float = 2.0):
 
 def atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
     high, low, close = df["high"], df["low"], df["close"]
-    tr = pd.concat([
-        high - low,
-        (high - close.shift(1)).abs(),
-        (low - close.shift(1)).abs(),
-    ], axis=1).max(axis=1)
+    tr = pd.concat(
+        [
+            high - low,
+            (high - close.shift(1)).abs(),
+            (low - close.shift(1)).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
     return tr.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
 
 
-def stochastic_rsi(series: pd.Series, rsi_period: int = 14,
-                   stoch_period: int = 14, k_smooth: int = 3,
-                   d_smooth: int = 3) -> tuple[pd.Series, pd.Series]:
+def stochastic_rsi(
+    series: pd.Series, rsi_period: int = 14, stoch_period: int = 14, k_smooth: int = 3, d_smooth: int = 3
+) -> tuple[pd.Series, pd.Series]:
     rsi_vals = rsi(series, rsi_period)
     rsi_min = rsi_vals.rolling(window=stoch_period).min()
     rsi_max = rsi_vals.rolling(window=stoch_period).max()
@@ -84,8 +87,7 @@ def adx(df: pd.DataFrame, period: int = 14) -> tuple[pd.Series, pd.Series, pd.Se
 
 
 def obv(df: pd.DataFrame) -> pd.Series:
-    direction = np.where(df["close"] > df["close"].shift(1), 1,
-                         np.where(df["close"] < df["close"].shift(1), -1, 0))
+    direction = np.where(df["close"] > df["close"].shift(1), 1, np.where(df["close"] < df["close"].shift(1), -1, 0))
     return (df["volume"] * direction).cumsum()
 
 
@@ -103,8 +105,7 @@ def ichimoku(df: pd.DataFrame) -> dict[str, pd.Series]:
     senkou_a = ((tenkan + kijun) / 2).shift(26)
     senkou_b = ((high.rolling(52).max() + low.rolling(52).min()) / 2).shift(26)
     chikou = close.shift(-26)
-    return {"tenkan": tenkan, "kijun": kijun,
-            "senkou_a": senkou_a, "senkou_b": senkou_b, "chikou": chikou}
+    return {"tenkan": tenkan, "kijun": kijun, "senkou_a": senkou_a, "senkou_b": senkou_b, "chikou": chikou}
 
 
 def volume_profile(df: pd.DataFrame, bins: int = 20) -> dict:
@@ -120,8 +121,12 @@ def volume_profile(df: pd.DataFrame, bins: int = 20) -> dict:
     poc = (price_range[poc_idx] + price_range[poc_idx + 1]) / 2
     total_vol = vol_at_price.sum()
     if total_vol == 0:
-        return {"poc": round(poc, 6), "vah": round(poc * 1.01, 6),
-                "val": round(poc * 0.99, 6), "profile": vol_at_price.tolist()}
+        return {
+            "poc": round(poc, 6),
+            "vah": round(poc * 1.01, 6),
+            "val": round(poc * 0.99, 6),
+            "profile": vol_at_price.tolist(),
+        }
     sorted_idx = np.argsort(vol_at_price)[::-1]
     cum = 0.0
     va_indices = []
@@ -134,8 +139,12 @@ def volume_profile(df: pd.DataFrame, bins: int = 20) -> dict:
     va_hi = max(va_indices)
     val_price = (price_range[va_lo] + price_range[va_lo + 1]) / 2
     vah_price = (price_range[va_hi] + price_range[va_hi + 1]) / 2
-    return {"poc": round(poc, 6), "vah": round(vah_price, 6),
-            "val": round(val_price, 6), "profile": vol_at_price.tolist()}
+    return {
+        "poc": round(poc, 6),
+        "vah": round(vah_price, 6),
+        "val": round(val_price, 6),
+        "profile": vol_at_price.tolist(),
+    }
 
 
 def supertrend(df: pd.DataFrame, period: int = 10, multiplier: float = 3.0) -> tuple[pd.Series, pd.Series]:
@@ -174,8 +183,7 @@ def supertrend(df: pd.DataFrame, period: int = 10, multiplier: float = 3.0) -> t
     return st_line, direction
 
 
-def dynamic_rsi_bands(series: pd.Series, rsi_period: int = 14,
-                      bb_period: int = 20, bb_std: float = 2.0) -> dict:
+def dynamic_rsi_bands(series: pd.Series, rsi_period: int = 14, bb_period: int = 20, bb_std: float = 2.0) -> dict:
     """Dynamic oversold/overbought thresholds using Bollinger Bands on RSI."""
     rsi_vals = rsi(series, rsi_period)
     rsi_sma = rsi_vals.rolling(window=bb_period).mean()
@@ -184,16 +192,25 @@ def dynamic_rsi_bands(series: pd.Series, rsi_period: int = 14,
     lower = rsi_sma - bb_std * rsi_std
     last_idx = len(series) - 1
     if last_idx < bb_period + rsi_period:
-        return {"rsi": 50.0, "upper": 70.0, "lower": 30.0, "rsi_sma": 50.0,
-                "is_oversold": False, "is_overbought": False}
+        return {
+            "rsi": 50.0,
+            "upper": 70.0,
+            "lower": 30.0,
+            "rsi_sma": 50.0,
+            "is_oversold": False,
+            "is_overbought": False,
+        }
     rsi_now = float(rsi_vals.iloc[last_idx])
     upper_now = float(np.clip(upper.iloc[last_idx], 55, 85))
     lower_now = float(np.clip(lower.iloc[last_idx], 15, 45))
     rsi_sma_now = float(rsi_sma.iloc[last_idx])
     return {
-        "rsi": round(rsi_now, 1), "upper": round(upper_now, 1),
-        "lower": round(lower_now, 1), "rsi_sma": round(rsi_sma_now, 1),
-        "is_oversold": rsi_now < lower_now, "is_overbought": rsi_now > upper_now,
+        "rsi": round(rsi_now, 1),
+        "upper": round(upper_now, 1),
+        "lower": round(lower_now, 1),
+        "rsi_sma": round(rsi_sma_now, 1),
+        "is_oversold": rsi_now < lower_now,
+        "is_overbought": rsi_now > upper_now,
     }
 
 

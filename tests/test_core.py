@@ -1,13 +1,14 @@
 """Smoke tests for OpenCrypto core modules."""
 
-
 import numpy as np
 import pandas as pd
 
 # ── Import smoke tests ──────────────────────────────────────────────
 
+
 def test_top_level_import():
     import opencrypto
+
     assert hasattr(opencrypto, "__version__")
     assert hasattr(opencrypto, "BaseStrategy")
     assert hasattr(opencrypto, "ShieldGuard")
@@ -23,6 +24,7 @@ def test_exception_hierarchy():
         OpenCryptoError,
         StrategyImplementationError,
     )
+
     assert issubclass(DataFetchError, OpenCryptoError)
     assert issubclass(ManipulationDetectedError, OpenCryptoError)
     assert issubclass(StrategyImplementationError, OpenCryptoError)
@@ -38,11 +40,13 @@ def test_indicators_import():
         detect_order_blocks,
         sma,
     )
+
     assert callable(sma)
     assert callable(detect_order_blocks)
 
 
 # ── StrategySignal ──────────────────────────────────────────────────
+
 
 def test_strategy_signal_properties():
     from opencrypto import StrategySignal
@@ -67,21 +71,24 @@ def test_strategy_signal_properties():
 
 # ── Indicators ──────────────────────────────────────────────────────
 
+
 def _make_ohlcv(n: int = 300) -> pd.DataFrame:
     rng = np.random.default_rng(42)
     close = 100 + np.cumsum(rng.normal(0, 0.5, n))
     close = np.maximum(close, 10)
-    return pd.DataFrame({
-        "open": close + rng.normal(0, 0.1, n),
-        "high": close + abs(rng.normal(0, 0.5, n)),
-        "low": close - abs(rng.normal(0, 0.5, n)),
-        "close": close,
-        "volume": rng.uniform(1000, 5000, n),
-        "quote_volume": rng.uniform(100000, 500000, n),
-        "trades": rng.integers(100, 1000, n),
-        "taker_buy_base": rng.uniform(500, 2500, n),
-        "taker_buy_quote": rng.uniform(50000, 250000, n),
-    })
+    return pd.DataFrame(
+        {
+            "open": close + rng.normal(0, 0.1, n),
+            "high": close + abs(rng.normal(0, 0.5, n)),
+            "low": close - abs(rng.normal(0, 0.5, n)),
+            "close": close,
+            "volume": rng.uniform(1000, 5000, n),
+            "quote_volume": rng.uniform(100000, 500000, n),
+            "trades": rng.integers(100, 1000, n),
+            "taker_buy_base": rng.uniform(500, 2500, n),
+            "taker_buy_quote": rng.uniform(50000, 250000, n),
+        }
+    )
 
 
 def test_compute_all_indicators():
@@ -105,6 +112,7 @@ def test_rsi_range():
 
 
 # ── ShieldGuard ─────────────────────────────────────────────────────
+
 
 def test_shield_guard_manipulation_clean():
     from opencrypto import ShieldGuard
@@ -138,6 +146,7 @@ def test_shield_guard_direction_cap():
 
 
 # ── BaseStrategy protocol ──────────────────────────────────────────
+
 
 def test_base_strategy_protocol():
     from opencrypto import BaseStrategy

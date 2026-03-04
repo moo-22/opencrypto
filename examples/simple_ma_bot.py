@@ -128,7 +128,9 @@ async def main():
         s = report["stats"]
         logger.info(
             "Final — WR: %s%% | R: %sR | Return: %s%%",
-            s["win_rate"], s["total_r"], s["total_return"],
+            s["win_rate"],
+            s["total_r"],
+            s["total_return"],
         )
 
 

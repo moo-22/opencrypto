@@ -45,17 +45,17 @@ class StrategySignal:
     """
 
     symbol: str
-    direction: str                  # "LONG" or "SHORT"
-    confidence: float               # 0-100, higher = more confident
-    entry: float                    # Entry price
-    sl: float                       # Stop-loss price
-    tp: float                       # Take-profit price
+    direction: str  # "LONG" or "SHORT"
+    confidence: float  # 0-100, higher = more confident
+    entry: float  # Entry price
+    sl: float  # Stop-loss price
+    tp: float  # Take-profit price
 
     leverage: int = 3
-    signal_type: str = "custom"     # Free-form label for your signal category
+    signal_type: str = "custom"  # Free-form label for your signal category
     reasons: list[str] = field(default_factory=list)
-    score: float = 0.0              # Internal scoring metric
-    indicator_count: int = 0        # How many indicators confirmed
+    score: float = 0.0  # Internal scoring metric
+    indicator_count: int = 0  # How many indicators confirmed
 
     # Optional metadata your strategy can attach
     metadata: dict = field(default_factory=dict)

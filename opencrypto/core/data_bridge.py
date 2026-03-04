@@ -106,19 +106,54 @@ class DataBridge:
                 data = resp.json()
                 if not data:
                     continue
-                df = pd.DataFrame(data, columns=[
-                    "open_time", "open", "high", "low", "close", "volume",
-                    "close_time", "quote_volume", "trades",
-                    "taker_buy_base", "taker_buy_quote", "ignore",
-                ])
-                for col in ["open", "high", "low", "close", "volume",
-                            "quote_volume", "taker_buy_base", "taker_buy_quote"]:
+                df = pd.DataFrame(
+                    data,
+                    columns=[
+                        "open_time",
+                        "open",
+                        "high",
+                        "low",
+                        "close",
+                        "volume",
+                        "close_time",
+                        "quote_volume",
+                        "trades",
+                        "taker_buy_base",
+                        "taker_buy_quote",
+                        "ignore",
+                    ],
+                )
+                for col in [
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume",
+                    "quote_volume",
+                    "taker_buy_base",
+                    "taker_buy_quote",
+                ]:
                     df[col] = df[col].astype(float)
                 df["trades"] = df["trades"].astype(int)
                 df["timestamp"] = pd.to_datetime(df["open_time"], unit="ms")
-                return df[["timestamp", "open", "high", "low", "close", "volume",
-                           "quote_volume", "trades", "taker_buy_base",
-                           "taker_buy_quote"]].copy().reset_index(drop=True)
+                return (
+                    df[
+                        [
+                            "timestamp",
+                            "open",
+                            "high",
+                            "low",
+                            "close",
+                            "volume",
+                            "quote_volume",
+                            "trades",
+                            "taker_buy_base",
+                            "taker_buy_quote",
+                        ]
+                    ]
+                    .copy()
+                    .reset_index(drop=True)
+                )
             except Exception as exc:
                 logger.debug("Kline fetch failed for %s from %s: %s", symbol, url, exc)
                 continue

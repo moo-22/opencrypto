@@ -26,11 +26,14 @@ async def send_telegram_message(text: str, chat_id: str = "") -> bool:
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.post(url, json={
-                "chat_id": target,
-                "text": text,
-                "parse_mode": "HTML",
-            })
+            resp = await client.post(
+                url,
+                json={
+                    "chat_id": target,
+                    "text": text,
+                    "parse_mode": "HTML",
+                },
+            )
             return resp.status_code == 200
     except Exception as exc:
         logger.error("Telegram message failed: %s", exc)
@@ -84,11 +87,15 @@ async def send_photo(photo_path: str, caption: str = "", chat_id: str = "") -> b
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             with open(photo_path, "rb") as f:
-                resp = await client.post(url, data={
-                    "chat_id": target,
-                    "caption": caption,
-                    "parse_mode": "HTML",
-                }, files={"photo": f})
+                resp = await client.post(
+                    url,
+                    data={
+                        "chat_id": target,
+                        "caption": caption,
+                        "parse_mode": "HTML",
+                    },
+                    files={"photo": f},
+                )
                 return resp.status_code == 200
     except Exception as exc:
         logger.error("Telegram photo send failed: %s", exc)

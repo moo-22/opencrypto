@@ -82,8 +82,7 @@ def _rr(entry: float, price: float, sl: float, direction: str) -> float:
     return (entry - price) / risk
 
 
-def _roundtrip_fee_r(entry: float, sl: float, direction: str,
-                     fee_bps: int, slip_bps: int) -> float:
+def _roundtrip_fee_r(entry: float, sl: float, direction: str, fee_bps: int, slip_bps: int) -> float:
     risk = _risk_per_unit(entry, sl, direction)
     total_fee = 2 * (fee_bps + slip_bps) / 10_000 * entry
     return total_fee / risk if risk > 0 else 0.0
@@ -97,8 +96,7 @@ def _apply_slip(px: float, *, direction: str, kind: str, slip_bps: int) -> float
         return px * (1 - frac) if direction == "long" else px * (1 + frac)
 
 
-def simulate_trade(signal_dict: dict, future_df: pd.DataFrame, *,
-                   max_hold: int = 72, exec_delay: int = 1) -> Trade:
+def simulate_trade(signal_dict: dict, future_df: pd.DataFrame, *, max_hold: int = 72, exec_delay: int = 1) -> Trade:
     """Simulate a single trade with trailing SL."""
     direction = signal_dict["direction"].lower()
     is_long = direction == "long"
@@ -173,11 +171,16 @@ def simulate_trade(signal_dict: dict, future_df: pd.DataFrame, *,
             if progress >= 0.40:
                 if not trade.sl_moved_to_be:
                     trade.sl_moved_to_be = True
-                if progress >= 1.3: offset = 0.12
-                elif progress >= 1.0: offset = 0.18
-                elif progress >= 0.80: offset = 0.25
-                elif progress >= 0.60: offset = 0.30
-                else: offset = 0.38
+                if progress >= 1.3:
+                    offset = 0.12
+                elif progress >= 1.0:
+                    offset = 0.18
+                elif progress >= 0.80:
+                    offset = 0.25
+                elif progress >= 0.60:
+                    offset = 0.30
+                else:
+                    offset = 0.38
                 trail_level = max(0, progress - offset)
                 if is_long:
                     new_sl = entry_px + tp_distance * trail_level
@@ -290,12 +293,14 @@ class BacktestEngine:
         for idx in range(self.lookback, len(df) - self.max_hold - 1, self.step):
             self.total_checked += 1
 
-            if self.stopped or (self.peak_capital > 0 and
-                (self.peak_capital - self.capital) / self.peak_capital * 100 >= self.max_drawdown_pct):
+            if self.stopped or (
+                self.peak_capital > 0
+                and (self.peak_capital - self.capital) / self.peak_capital * 100 >= self.max_drawdown_pct
+            ):
                 self.stopped = True
                 continue
 
-            window = df.iloc[idx - self.lookback:idx + 1].copy().reset_index(drop=True)
+            window = df.iloc[idx - self.lookback : idx + 1].copy().reset_index(drop=True)
             try:
                 window = compute_all_indicators(window)
             except Exception:
@@ -314,7 +319,7 @@ class BacktestEngine:
                 continue
 
             signal_dict = signal.to_dict() if isinstance(signal, StrategySignal) else signal
-            future = df.iloc[idx + 1:idx + 1 + self.max_hold + 1].copy().reset_index(drop=True)
+            future = df.iloc[idx + 1 : idx + 1 + self.max_hold + 1].copy().reset_index(drop=True)
 
             trade = simulate_trade(signal_dict, future, max_hold=self.max_hold)
 
@@ -367,11 +372,16 @@ def calc_stats(trades: list[Trade], engine: BacktestEngine) -> dict:
     swr = round(sum(1 for t in shorts if t.pnl_r > 0) / len(shorts) * 100, 1) if shorts else 0
 
     return {
-        "total": n, "wins": nw, "losses": nl,
+        "total": n,
+        "wins": nw,
+        "losses": nl,
         "win_rate": round(nw / n * 100, 2),
-        "profit_factor": pf, "ev": ev,
-        "total_r": total_r, "avg_r": avg_r,
-        "avg_win_r": avg_win_r, "avg_loss_r": avg_loss_r,
+        "profit_factor": pf,
+        "ev": ev,
+        "total_r": total_r,
+        "avg_r": avg_r,
+        "avg_win_r": avg_win_r,
+        "avg_loss_r": avg_loss_r,
         "initial_capital": engine.initial_capital,
         "final_capital": final_capital,
         "total_return": total_return,
@@ -383,14 +393,15 @@ def calc_stats(trades: list[Trade], engine: BacktestEngine) -> dict:
         "ttl_rate": round(ttlh / n * 100, 1),
         "trailing_be_count": sum(1 for t in trades if t.sl_moved_to_be),
         "trailing_lock_count": sum(1 for t in trades if t.sl_locked_profit),
-        "longs": len(longs), "shorts": len(shorts),
-        "long_wr": lwr, "short_wr": swr,
+        "longs": len(longs),
+        "shorts": len(shorts),
+        "long_wr": lwr,
+        "short_wr": swr,
         "manip_filtered": engine.skipped_manip,
     }
 
 
-async def fetch_historical(symbol: str, interval: str = "1h",
-                           days: int = 30) -> pd.DataFrame:
+async def fetch_historical(symbol: str, interval: str = "1h", days: int = 30) -> pd.DataFrame:
     all_data = []
     end_ms = int(datetime.now(UTC).timestamp() * 1000)
     start_ms = int((datetime.now(UTC) - timedelta(days=days)).timestamp() * 1000)
@@ -400,14 +411,16 @@ async def fetch_historical(symbol: str, interval: str = "1h",
         cursor = start_ms
         while cursor < end_ms:
             params = {
-                "symbol": clean, "interval": interval,
-                "startTime": cursor, "endTime": end_ms, "limit": 1000,
+                "symbol": clean,
+                "interval": interval,
+                "startTime": cursor,
+                "endTime": end_ms,
+                "limit": 1000,
             }
             try:
                 resp = await client.get(f"{FAPI_URL}/fapi/v1/klines", params=params)
                 if resp.status_code != 200:
-                    resp = await client.get(
-                        "https://api.binance.com/api/v3/klines", params=params)
+                    resp = await client.get("https://api.binance.com/api/v3/klines", params=params)
                 resp.raise_for_status()
                 data = resp.json()
                 if not data:
@@ -424,18 +437,41 @@ async def fetch_historical(symbol: str, interval: str = "1h",
     if not all_data:
         return pd.DataFrame()
 
-    df = pd.DataFrame(all_data, columns=[
-        "open_time", "open", "high", "low", "close", "volume",
-        "close_time", "quote_volume", "trades",
-        "taker_buy_base", "taker_buy_quote", "ignore",
-    ])
-    for col in ["open", "high", "low", "close", "volume", "quote_volume",
-                "taker_buy_base", "taker_buy_quote"]:
+    df = pd.DataFrame(
+        all_data,
+        columns=[
+            "open_time",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "close_time",
+            "quote_volume",
+            "trades",
+            "taker_buy_base",
+            "taker_buy_quote",
+            "ignore",
+        ],
+    )
+    for col in ["open", "high", "low", "close", "volume", "quote_volume", "taker_buy_base", "taker_buy_quote"]:
         df[col] = df[col].astype(float)
     df["trades"] = df["trades"].astype(int)
     df["timestamp"] = pd.to_datetime(df["open_time"], unit="ms")
-    df = df[["timestamp", "open", "high", "low", "close", "volume",
-             "quote_volume", "trades", "taker_buy_base", "taker_buy_quote"]].copy()
+    df = df[
+        [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "quote_volume",
+            "trades",
+            "taker_buy_base",
+            "taker_buy_quote",
+        ]
+    ].copy()
     return df.drop_duplicates(subset=["timestamp"]).reset_index(drop=True)
 
 
@@ -457,7 +493,11 @@ async def run_backtest(
     logger.info("Backtest started — %s v%s", strategy.name, strategy.version)
     logger.info(
         "Period: %d days | Step: %dh | Max hold: %dh | Capital: $%.0f | Risk/trade: %.1f%%",
-        days, step, max_hold, initial_capital, risk_per_trade * 100,
+        days,
+        step,
+        max_hold,
+        initial_capital,
+        risk_per_trade * 100,
     )
 
     bridge = DataBridge()
@@ -466,7 +506,9 @@ async def run_backtest(
 
     engine = BacktestEngine(
         strategy=strategy,
-        lookback=200, step=step, max_hold=max_hold,
+        lookback=200,
+        step=step,
+        max_hold=max_hold,
         initial_capital=initial_capital,
         risk_per_trade=risk_per_trade,
         max_drawdown_pct=max_drawdown,
@@ -483,7 +525,13 @@ async def run_backtest(
             pnl_r = sum(s.pnl_r for s in sigs)
             logger.info(
                 "[%d/%d] %s — %d trades | %dW/%dL | R: %+.2f",
-                i + 1, len(symbols), sym, len(sigs), w, len(sigs) - w, pnl_r,
+                i + 1,
+                len(symbols),
+                sym,
+                len(sigs),
+                w,
+                len(sigs) - w,
+                pnl_r,
             )
         else:
             logger.debug("[%d/%d] %s — no signals", i + 1, len(symbols), sym)
@@ -503,22 +551,30 @@ async def run_backtest(
 
     logger.info(
         "Results: %d trades | WR: %.1f%% | PF: %.2f | R: %+.2fR (avg %.2fR)",
-        stats["total"], stats["win_rate"], stats["profit_factor"],
-        stats["total_r"], stats["avg_r"],
+        stats["total"],
+        stats["win_rate"],
+        stats["profit_factor"],
+        stats["total_r"],
+        stats["avg_r"],
     )
     logger.info(
         "Capital: $%.0f → $%.0f (%+.2f%%) | Max DD: %.1f%% | Time: %.0fs",
-        stats["initial_capital"], stats["final_capital"],
-        stats["total_return"], stats["max_drawdown"], elapsed,
+        stats["initial_capital"],
+        stats["final_capital"],
+        stats["total_return"],
+        stats["max_drawdown"],
+        elapsed,
     )
 
     report = {
         "meta": {
             "strategy": strategy.name,
             "version": strategy.version,
-            "start": t0.isoformat(), "end": t1.isoformat(),
+            "start": t0.isoformat(),
+            "end": t1.isoformat(),
             "elapsed": round(elapsed, 1),
-            "days": days, "coins": len(symbols),
+            "days": days,
+            "coins": len(symbols),
         },
         "stats": stats,
         "equity_curve": engine.equity_curve,

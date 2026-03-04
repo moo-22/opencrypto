@@ -62,8 +62,7 @@ async def generate_chart(
 
         kwargs = {}
         if hlines:
-            kwargs["hlines"] = dict(hlines=hlines, colors=colors,
-                                    linestyle="--", linewidths=0.8)
+            kwargs["hlines"] = dict(hlines=hlines, colors=colors, linestyle="--", linewidths=0.8)
 
         mpf.plot(
             chart_df,

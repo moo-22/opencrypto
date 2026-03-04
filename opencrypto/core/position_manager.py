@@ -160,7 +160,9 @@ class PositionManager:
                     timeout_pnl = (entry - current_price) / entry * 100
 
                 should_timeout = False
-                if (age_hours >= self.max_position_age_hours and timeout_pnl < 0.5) or (age_hours >= self.deep_loss_timeout_hours and timeout_pnl <= self.deep_loss_threshold):
+                if (age_hours >= self.max_position_age_hours and timeout_pnl < 0.5) or (
+                    age_hours >= self.deep_loss_timeout_hours and timeout_pnl <= self.deep_loss_threshold
+                ):
                     should_timeout = True
 
                 if should_timeout:

@@ -33,9 +33,7 @@ class ManipulationDetectedError(OpenCryptoError):
         warnings: List of individual check descriptions that triggered.
     """
 
-    def __init__(
-        self, message: str, *, risk_score: int = 0, warnings: list[str] | None = None
-    ):
+    def __init__(self, message: str, *, risk_score: int = 0, warnings: list[str] | None = None):
         self.risk_score = risk_score
         self.warnings = warnings or []
         super().__init__(message)
