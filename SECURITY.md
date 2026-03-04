@@ -14,7 +14,7 @@ public disclosure.
 
 ### How to Report
 
-Send an email to **kayrademirkan@proton.me** with the following information:
+Send an email to **kayrademirkan@gmail.com** with the following information:
 
 1. **Description** of the vulnerability.
 2. **Steps to reproduce** or a proof-of-concept.
@@ -45,6 +45,6 @@ The following are in scope:
 ## Security Best Practices for Users
 
 - **Never commit `.env` files** to version control.
-- Keep dependencies up to date: `pip install --upgrade opencrypto`.
+- Keep dependencies up to date: `pip install --upgrade git+https://github.com/kayrademirkan/opencrypto.git`.
 - Use environment variables or a secrets manager for all API keys.
 - Run the framework in an isolated environment (venv / container).
